@@ -1,4 +1,4 @@
-FROM golang:1.15 as build
+  FROM golang:1.15 as build
 
 ARG TAG="v1.9.24"
 
@@ -16,6 +16,12 @@ RUN git clone https://github.com/ethereum/go-ethereum.git && cd /go/go-ethereum 
 FROM debian:10.2-slim as runtime
 
 RUN mkdir -p /app/data && chown nobody:nogroup /app/data
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    jq \
+    ca-certificates; \
+    apt-get clean;
 
 COPY --from=build /go/go-ethereum/build/bin/clef /usr/local/bin/clef
 COPY packaging/rules.js /app/config/rules.js
