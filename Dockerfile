@@ -1,4 +1,4 @@
-  FROM golang:1.15 as build
+FROM golang:1.15 as build
 
 ARG TAG="v1.9.24"
 
