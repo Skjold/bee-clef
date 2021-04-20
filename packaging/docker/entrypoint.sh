@@ -93,7 +93,7 @@ vault_upload() {
 }
 
 run() {
-    SECRET="${1}"
+    SECRET=${1}
     rm /tmp/stdin /tmp/stdout || true
     mkfifo /tmp/stdin /tmp/stdout
     (
@@ -113,7 +113,8 @@ full() {
     if [ ! -f "$DATA_DIR"/masterseed.json ]; then
         init
     fi
-    run $(cat "$DATA_DIR"/password)
+    SECRET=$(cat "$DATA_DIR"/password)
+    run $SECRET
 }
 
 vault() {
@@ -130,7 +131,9 @@ vault() {
             vault_download;
         fi;
     fi
-    run $(>&2 curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/password | jq -r .data.data.password)
+    SECRET=$(>&2 curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/password | jq -r .data.data.password)
+    if [ "$VAULT_DEBUG" ]; then >&2 echo "Running Clef with secret $SECRET"; fi;
+    run $SECRET
 }
 
 $ACTION
