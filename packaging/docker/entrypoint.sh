@@ -5,10 +5,10 @@ CHAINID="${CLEF_CHAINID:-12345}"
 DATA_DIR=/app/data
 IP="${CLEF_IP:-0.0.0.0}"
 PORT="${CLEF_PORT:-8550}"
-VAULT_TOKEN=${VAULT_TOKEN}
+VAULT_TOKEN="${VAULT_TOKEN}"
 VAULT_SECRETS_DATA="${VAULT_SECRETS_ENGINE}"/data/"${VAULT_SECRETS_DIR}"
 VAULT_SECRETS_METADATA="${VAULT_SECRETS_ENGINE}"/metadata/"${VAULT_SECRETS_DIR}"
-DEBUG=${CLEF_DEBUG}
+DEBUG="${CLEF_DEBUG:-false}"
 
 init() {
     parse_json() { echo $1|sed -e 's/[{}]/''/g'|sed -e 's/", "/'\",\"'/g'|sed -e 's/" ,"/'\",\"'/g'|sed -e 's/" , "/'\",\"'/g'|sed -e 's/","/'\"---SEPERATOR---\"'/g'|awk -F=':' -v RS='---SEPERATOR---' "\$1~/\"$2\"/ {print}"|sed -e "s/\"$2\"://"|tr -d "\n\t"|sed -e 's/\\"/"/g'|sed -e 's/\\\\/\\/g'|sed -e 's/^[ \t]*//g'|sed -e 's/^"//' -e 's/"$//' ; }
@@ -117,7 +117,7 @@ full() {
 vault() {
     if [ ! -f "$DATA_DIR"/masterseed.json ]; then
         if [ $DEBUG ]; then >&2 echo "masterseed.json not found in $DATA_DIR"; fi;
-        if [ "$(>&2 curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/masterseed.json)" = '{"errors":[]}' ]; then
+        if [ "$(>&2 curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/masterseed)" = '{"errors":[]}' ]; then
             if [ $DEBUG ]; then >&2 echo "masterseed.json not found in Vault"; fi;
             if [ $DEBUG ]; then >&2 echo "Initializing Clef"; fi;
             init;
