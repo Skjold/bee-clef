@@ -75,18 +75,18 @@ vault_upload() {
 
     VAULT=$(ls "$DATA" | grep -E '[[:xdigit:]]{20}')
     if [ $DEBUG ]; then >&2 echo "Clef Vault dir is $VAULT"; fi
-    echo {\"data\":{\"name\":\"$VAULT\"}} | >&2 curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/name
     if [ $DEBUG ]; then >&2 echo "Uploading Vault dir name to "$VAULT_SECRETS_DATA"/vault/name using token $VAULT_TOKEN"; fi
-    echo {\"data\":$(cat "$DATA"/"$CLEF_VAULT_DIR"/config.json)} | >&2 curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/config
+    echo {\"data\":{\"name\":\"$VAULT\"}} | >&2 curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/name
     if [ $DEBUG ]; then >&2 echo "Uploading config.json to "$VAULT_SECRETS_DATA"/vault/config using token $VAULT_TOKEN"; fi
-    echo {\"data\":$(cat "$DATA"/"$CLEF_VAULT_DIR"/credentials.json)} | >&2 curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/credentials
+    echo {\"data\":$(cat "$DATA"/"$VAULT"/config.json)} | >&2 curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/config
     if [ $DEBUG ]; then >&2 echo "Uploading credentials.json to "$VAULT_SECRETS_DATA"/vault/credentials using token $VAULT_TOKEN"; fi
-
+    echo {\"data\":$(cat "$DATA"/"$VAULT"/credentials.json)} | >&2 curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/credentials
+    
     ls -1 "$DATA"/keystore | \
     while read key; do \
+        if [ $DEBUG ]; then >&2 echo "Uploading key $key to "$VAULT_SECRETS_DATA"/keystore/"$key" using token $VAULT_TOKEN"; fi;
         echo {\"data\":$(cat "$DATA"/keystore/"$key")} | \
         >&2 curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/keystore/"$key";
-        if [ $DEBUG ]; then >&2 echo "Uploading key $key to "$VAULT_SECRETS_DATA"/keystore/"$key" using token $VAULT_TOKEN"; fi;
     done
 }
 
