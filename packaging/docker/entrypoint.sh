@@ -62,8 +62,8 @@ vault_download() {
         while read -r key
         do
             if [ "$VAULT_DEBUG" ]; then >&2 echo "Downloading key $key from $VAULT_SECRETS_DATA/keystore/$key"; fi;
-            curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/keystore/"$key" | jq -rc .data.data > "$key";
-            chmod 600 "$key";
+            curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/keystore/"$key" | jq -rc .data.data > "$DATA_DIR/keystore/$key";
+            chmod 600 "$DATA_DIR/keystore/$key";
         done;
     fi
 }
