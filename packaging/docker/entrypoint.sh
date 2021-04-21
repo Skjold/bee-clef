@@ -73,7 +73,6 @@ vault_upload() {
     echo "{\"data\":$(cat "$DATA_DIR"/masterseed.json)}" | curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/masterseed
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading password to $VAULT_SECRETS_DATA/password using token $VAULT_TOKEN"; fi
     echo "{\"data\":{\"password\":\"$(cat "$DATA_DIR"/password)\"}}" | curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/password
-    rm password
 
     VAULT_DIR=$(find "$DATA_DIR" -regextype sed -regex ".*/[[:xdigit:]]\{20\}" -printf '%P\n')
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Clef Vault dir is $VAULT_DIR"; fi
