@@ -96,6 +96,10 @@ vault_upload() {
     addr=$(jq -r .address < "$DATA_DIR"/keystore/"$keyfile")
     echo "{\"data\":{\"address\":\"$addr\"}}" | curl -s --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/address
     sleep 1
+
+    if [ "$VAULT_DEBUG" ]; then >&2 echo "Marking $VAULT_SECRETS_DATA as active using token $VAULT_TOKEN"; fi
+    echo "{\"data\":{\"active\":\"true\"}}" | curl -s --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/active
+    sleep 1
 }
 
 run() {
@@ -125,8 +129,8 @@ full() {
 vault() {
     if [ ! -f "$DATA_DIR"/masterseed.json ]; then
         if [ "$VAULT_DEBUG" ]; then >&2 echo "masterseed.json not found in $DATA_DIR"; fi;
-        if [ "$(curl -s --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/masterseed)" = '{"errors":[]}' ]; then
-            if [ "$VAULT_DEBUG" ]; then >&2 echo "masterseed.json not found in Vault"; fi;
+        if [ "$(curl -s --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/active)" = '{"errors":[]}' ]; then
+            if [ "$VAULT_DEBUG" ]; then >&2 echo "Active key not found in Vault, creating/overwriting new secrets"; fi;
             if [ "$VAULT_DEBUG" ]; then >&2 echo "Initializing Clef"; fi;
             init;
             sleep 1;
