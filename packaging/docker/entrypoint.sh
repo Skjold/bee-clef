@@ -83,8 +83,8 @@ vault_upload() {
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading key $keyfile to $VAULT_SECRETS_DATA/keystore/$keyfile using token $VAULT_TOKEN"; fi
     echo "{\"data\":$(cat "$DATA_DIR"/keystore/"$keyfile")}" | \
     curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/keystore/"$keyfile"
-    jq -r .address < "$DATA_DIR"/keystore/"$keyfile" | \
-    curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/address
+    addr=$(jq -r .address < "$DATA_DIR"/keystore/"$keyfile")
+    echo "{\"data\":{\"address\":\"$addr\"}}" | curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/address
 }
 
 run() {
