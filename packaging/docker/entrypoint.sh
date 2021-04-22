@@ -57,14 +57,10 @@ vault_download() {
     if [ ! -d "$DATA_DIR"/keystore ]; then
         mkdir "$DATA_DIR/keystore";
         chmod 700 "$DATA_DIR/keystore";
-        curl --header "X-Vault-Token: $VAULT_TOKEN" --request LIST "$VAULT_SECRETS_METADATA"/keystore | \
-        jq -rc '.data.keys|.[]' | \
-        while read -r key
-        do
-            if [ "$VAULT_DEBUG" ]; then >&2 echo "Downloading key $key from $VAULT_SECRETS_DATA/keystore/$key"; fi;
-            curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/keystore/"$key" | jq -rc .data.data > "$DATA_DIR/keystore/$key";
-            chmod 600 "$DATA_DIR/keystore/$key";
-        done;
+        keyfile="$(curl --header "X-Vault-Token: $VAULT_TOKEN" --request LIST "$VAULT_SECRETS_METADATA"/keystore | jq -rc '.data.keys|.[]')"
+        if [ "$VAULT_DEBUG" ]; then >&2 echo "Downloading key $keyfile from $VAULT_SECRETS_DATA/keystore/$keyfile"; fi
+        curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/keystore/"$keyfile" | jq -rc .data.data > "$DATA_DIR/keystore/$keyfile"
+        chmod 600 "$DATA_DIR/keystore/$keyfile"
     fi
 }
 
@@ -83,12 +79,12 @@ vault_upload() {
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading credentials.json to $VAULT_SECRETS_DATA/vault/credentials using token $VAULT_TOKEN"; fi
     echo "{\"data\":$(cat "$DATA_DIR"/"$VAULT_DIR"/credentials.json)}" | curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/credentials
     
-    find "$DATA_DIR"/keystore -mindepth 1 -maxdepth 1 -printf '%P\n' | \
-    while read -r key; do \
-        if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading key $key to $VAULT_SECRETS_DATA/keystore/$key using token $VAULT_TOKEN"; fi;
-        echo "{\"data\":$(cat "$DATA_DIR"/keystore/"$key")}" | \
-        curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/keystore/"$key";
-    done
+    keyfile="$(find "$DATA_DIR"/keystore -mindepth 1 -maxdepth 1 -printf '%P\n')"
+    if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading key $keyfile to $VAULT_SECRETS_DATA/keystore/$keyfile using token $VAULT_TOKEN"; fi
+    echo "{\"data\":$(cat "$DATA_DIR"/keystore/"$keyfile")}" | \
+    curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/keystore/"$keyfile"
+    jq -r .address < "$DATA_DIR"/keystore/"$keyfile" | \
+    curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/address
 }
 
 run() {
