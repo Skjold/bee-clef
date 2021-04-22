@@ -37,54 +37,65 @@ EOF
 vault_download() {
     if [ ! -f "$DATA_DIR"/masterseed.json ]; then
         if [ "$VAULT_DEBUG" ]; then >&2 echo "Downloading masterseed.json from $VAULT_SECRETS_DATA/masterseed"; fi
-        curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/masterseed | jq -c .data.data > "$DATA_DIR"/masterseed.json;
+        curl -s --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/masterseed | jq -c .data.data > "$DATA_DIR"/masterseed.json;
         chmod 400 "$DATA_DIR"/masterseed.json;
+        sleep 1;
     fi
-        
     VAULT_DIR=$(curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/vault/name | jq -r .data.data.name)
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Clef Vault directory is $VAULT_DIR"; fi
     if [ ! -d "$DATA_DIR"/"$VAULT_DIR" ]; then
         mkdir "$DATA_DIR"/"$VAULT_DIR";
         chmod 700 "$DATA_DIR"/"$VAULT_DIR";
         if [ "$VAULT_DEBUG" ]; then >&2 echo "Downloading config.json from $VAULT_SECRETS_DATA/vault/config"; fi
-        curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/vault/config | jq -c .data.data > "$DATA_DIR"/"$VAULT_DIR"/config.json;
+        curl -s --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/vault/config | jq -c .data.data > "$DATA_DIR"/"$VAULT_DIR"/config.json;
         chmod 600 "$DATA_DIR"/"$VAULT_DIR"/config.json;
+        sleep 1;
         if [ "$VAULT_DEBUG" ]; then >&2 echo "Downloading credentials.json from $VAULT_SECRETS_DATA/vault/credentials"; fi
-        curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/vault/credentials | jq -c .data.data > "$DATA_DIR"/"$VAULT_DIR"/credentials.json;
-        chmod 600 "$DATA_DIR"/"$VAULT_DIR"/credentials.json;        
+        curl -s --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/vault/credentials | jq -c .data.data > "$DATA_DIR"/"$VAULT_DIR"/credentials.json;
+        chmod 600 "$DATA_DIR"/"$VAULT_DIR"/credentials.json;
+        sleep 1; 
     fi
 
     if [ ! -d "$DATA_DIR"/keystore ]; then
         mkdir "$DATA_DIR/keystore";
         chmod 700 "$DATA_DIR/keystore";
-        keyfile="$(curl --header "X-Vault-Token: $VAULT_TOKEN" --request LIST "$VAULT_SECRETS_METADATA"/keystore | jq -rc '.data.keys|.[]')"
+        keyfile="$(curl -s --header "X-Vault-Token: $VAULT_TOKEN" --request LIST "$VAULT_SECRETS_METADATA"/keystore | jq -rc '.data.keys|.[]')"
+        sleep 1;
         if [ "$VAULT_DEBUG" ]; then >&2 echo "Downloading key $keyfile from $VAULT_SECRETS_DATA/keystore/$keyfile"; fi
-        curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/keystore/"$keyfile" | jq -rc .data.data > "$DATA_DIR/keystore/$keyfile"
+        curl -s --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/keystore/"$keyfile" | jq -rc .data.data > "$DATA_DIR/keystore/$keyfile"
         chmod 600 "$DATA_DIR/keystore/$keyfile"
+        sleep 1;
     fi
 }
 
 vault_upload() {
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading masterseed.json to $VAULT_SECRETS_DATA/masterseed using token $VAULT_TOKEN"; fi
-    echo "{\"data\":$(cat "$DATA_DIR"/masterseed.json)}" | curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/masterseed
+    echo "{\"data\":$(cat "$DATA_DIR"/masterseed.json)}" | curl -s --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/masterseed
+    sleep 1
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading password to $VAULT_SECRETS_DATA/password using token $VAULT_TOKEN"; fi
-    echo "{\"data\":{\"password\":\"$(cat "$DATA_DIR"/password)\"}}" | curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/password
+    echo "{\"data\":{\"password\":\"$(cat "$DATA_DIR"/password)\"}}" | curl -s --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/password
+    sleep 1
 
     VAULT_DIR=$(find "$DATA_DIR" -regextype sed -regex ".*/[[:xdigit:]]\{20\}" -printf '%P\n')
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Clef Vault dir is $VAULT_DIR"; fi
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading Vault dir name to $VAULT_SECRETS_DATA/vault/name using token $VAULT_TOKEN"; fi
-    echo "{\"data\":{\"name\":\"$VAULT_DIR\"}}" | curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/name
+    echo "{\"data\":{\"name\":\"$VAULT_DIR\"}}" | curl -s --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/name
+    sleep 1
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading config.json to $VAULT_SECRETS_DATA/vault/config using token $VAULT_TOKEN"; fi
-    echo "{\"data\":$(cat "$DATA_DIR"/"$VAULT_DIR"/config.json)}" | curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/config
+    echo "{\"data\":$(cat "$DATA_DIR"/"$VAULT_DIR"/config.json)}" | curl -s --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/config
+    sleep 1
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading credentials.json to $VAULT_SECRETS_DATA/vault/credentials using token $VAULT_TOKEN"; fi
-    echo "{\"data\":$(cat "$DATA_DIR"/"$VAULT_DIR"/credentials.json)}" | curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/credentials
+    echo "{\"data\":$(cat "$DATA_DIR"/"$VAULT_DIR"/credentials.json)}" | curl -s --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/vault/credentials
+    sleep 1
     
     keyfile="$(find "$DATA_DIR"/keystore -mindepth 1 -maxdepth 1 -printf '%P\n')"
     if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading key $keyfile to $VAULT_SECRETS_DATA/keystore/$keyfile using token $VAULT_TOKEN"; fi
     echo "{\"data\":$(cat "$DATA_DIR"/keystore/"$keyfile")}" | \
-    curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/keystore/"$keyfile"
+    curl -s --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/keystore/"$keyfile"
+    sleep 1
     addr=$(jq -r .address < "$DATA_DIR"/keystore/"$keyfile")
-    echo "{\"data\":{\"address\":\"$addr\"}}" | curl --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/address
+    echo "{\"data\":{\"address\":\"$addr\"}}" | curl -s --header "X-Vault-Token: $VAULT_TOKEN" --data @- --request POST "$VAULT_SECRETS_DATA"/address
+    sleep 1
 }
 
 run() {
@@ -114,18 +125,20 @@ full() {
 vault() {
     if [ ! -f "$DATA_DIR"/masterseed.json ]; then
         if [ "$VAULT_DEBUG" ]; then >&2 echo "masterseed.json not found in $DATA_DIR"; fi;
-        if [ "$(curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/masterseed)" = '{"errors":[]}' ]; then
+        if [ "$(curl -s --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/masterseed)" = '{"errors":[]}' ]; then
             if [ "$VAULT_DEBUG" ]; then >&2 echo "masterseed.json not found in Vault"; fi;
             if [ "$VAULT_DEBUG" ]; then >&2 echo "Initializing Clef"; fi;
             init;
+            sleep 1;
             if [ "$VAULT_DEBUG" ]; then >&2 echo "Uploading key material to Vault"; fi;
             vault_upload;
+            sleep 1;
         else
             if [ "$VAULT_DEBUG" ]; then >&2 echo "Downloading key material from Vault"; fi;
             vault_download;
         fi;
     fi
-    run $(curl --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/password | jq -r .data.data.password)
+    run $(curl -s --header "X-Vault-Token: $VAULT_TOKEN" "$VAULT_SECRETS_DATA"/password | jq -r .data.data.password)
 }
 
 $ACTION
